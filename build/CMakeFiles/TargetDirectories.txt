@@ -1,0 +1,2 @@
+/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/CMakeFiles/libelas.dir
+/Users/luma/Code/Luma/LIBELAS/build/App/CMakeFiles/LIBELASApp.dir

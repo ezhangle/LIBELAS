@@ -1,0 +1,1 @@
+/usr/bin/c++   -msse3 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -fopenmp CMakeFiles/LIBELASApp.dir/main.cpp.o CMakeFiles/LIBELASApp.dir/Timer.cpp.o  -o LIBELASApp  ../LIBELAS/liblibelas.a 

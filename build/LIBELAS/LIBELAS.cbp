@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+   <FileVersion major="1" minor="6" />
+   <Project>
+      <Option title="LIBELAS" />
+      <Option makefile_is_custom="1" />
+      <Option compiler="gcc" />
+      <Option virtualFolders="CMake Files\;CMake Files\LIBELAS\;CMake Files\CMakeModules\;CMake Files\App\;CMake Files\build\;CMake Files\build\LIBELAS\;" />
+      <Build>
+      <Target title="all">
+         <Option working_dir="/Users/luma/Code/Luma/LIBELAS/build/LIBELAS" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 all" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="libelas">
+         <Option output="/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/liblibelas.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/Users/luma/Code/Luma/LIBELAS/build/LIBELAS" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/Users/luma/Code/Luma/LIBELAS/." />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 libelas" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="libelas/fast">
+         <Option output="/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/liblibelas.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/Users/luma/Code/Luma/LIBELAS/build/LIBELAS" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/Users/luma/Code/Luma/LIBELAS/." />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 libelas/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      </Build>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/descriptor.cpp">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/elas.cpp">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/filter.cpp">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/matrix.cpp">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/triangle.cpp">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/descriptor.h">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/elas.h">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/filter.h">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/matrix.h">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/src/triangle.h">
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/config.h.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/LIBELASConfigVersion.cmake.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/LIBELASConfig.cmake.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/LIBELASConfig.cmake.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/config.h.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/LIBELASConfigVersion.cmake.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/LIBELASConfig.cmake.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/LIBELAS/LIBELASConfig.cmake.in">
+          <Option virtualFolder="CMake Files\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/CMakeModules/SetPlatformVars.cmake">
+          <Option virtualFolder="CMake Files\CMakeModules\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/App/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\App\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/LIBELASConfigVersion.cmake">
+          <Option virtualFolder="CMake Files\build\LIBELAS\" />
+      </Unit>
+      <Unit filename="/Users/luma/Code/Luma/LIBELAS/build/LIBELAS/LIBELASConfig.cmake">
+          <Option virtualFolder="CMake Files\build\LIBELAS\" />
+      </Unit>
+   </Project>
+</CodeBlocks_project_file>
