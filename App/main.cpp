@@ -25,18 +25,82 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <LIBELAS/src/elas.h>
 #include <LIBELAS/src/image.h>
 #include "Timer.h"
+#include <dirent.h>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
+#include "GetPot"
 
 using namespace std;
 
 // compute disparities of pgm image input pair file_1, file_2
 
-void elas(uchar *left, uchar *right, float *disp_out)
+std::vector<std::string> ScanDir(
+    const char*     cDir,
+    std::string     sKeyword)
 {
-  
-  
+  DIR *dir;
+  struct dirent *ent;
+  std::vector<std::string> vFileNames;
+  if ((dir = opendir (cDir)) != NULL)
+  {
+    std::string sFileName;
+
+    while ((ent = readdir (dir)) != NULL)
+    {
+      sFileName = std::string(ent->d_name);
+      if(sFileName.find(sKeyword)!=std::string::npos)
+      {
+        vFileNames.push_back(sFileName);
+      }
+    }
+    closedir (dir);
+  }
+  else
+  {
+    std::cout<<"Error! Could not open directory "<<std::string(cDir)<<std::endl;
+  }
+
+  std::cout<<"[ScanDirectory] Found "<<vFileNames.size()<<
+             " files with keyword: "<<sKeyword<<" in dir:"<<std::string(cDir)<<std::endl;
+  return vFileNames;
 }
 
-void process (const char* file_1,const char* file_2) {
+void ShowVisableDepth(
+    std::string     sWndName,
+    const cv::Mat   Depth)
+{
+  double min;
+  double max;
+  cv::minMaxIdx(Depth, &min, &max);
+  cv::Mat adjMap;
+  cv::convertScaleAbs(Depth, adjMap, 255 / max);
+  cv::imshow(sWndName, adjMap);
+  cv::waitKey(1);
+}
+
+bool WritePDM( const std::string&  FileName, const cv::Mat& Image )
+{
+  if( Image.type() != CV_32FC1 ) {
+    return false;
+  }
+
+  std::ofstream pFile( FileName.c_str(), std::ios::out | std::ios::binary );
+  pFile << "P7" << std::endl;
+  pFile << Image.cols << " " << Image.rows << std::endl;
+  const unsigned int Size = Image.elemSize1() * Image.rows * Image.cols;
+  pFile << 4294967295 << std::endl;
+  pFile.write( (const char*)Image.data, Size );
+  pFile.close();
+  std::cout<<"[WritePDM] save pdm success, height:"<<Image.rows<<", width:"<<Image.cols<<", file: "
+          <<FileName<<std::endl;
+  return true;
+}
+
+
+void process (const char* file_1,const char* file_2, bool bSaveDepthImages) {
 
   // load images
   image<uchar> *I1,*I2;
@@ -47,11 +111,11 @@ void process (const char* file_1,const char* file_2) {
   if (I1->width()<=0 || I1->height() <=0 || I2->width()<=0 || I2->height() <=0 ||
       I1->width()!=I2->width() || I1->height()!=I2->height()) {
     cout << "ERROR: Images must be of same size, but" << endl;
-    cout << "       I1: " << I1->width() <<  " x " << I1->height() << 
-                 ", I2: " << I2->width() <<  " x " << I2->height() << endl;
+    cout << "       I1: " << I1->width() <<  " x " << I1->height() <<
+            ", I2: " << I2->width() <<  " x " << I2->height() << endl;
     delete I1;
     delete I2;
-    return;    
+    return;
   }
 
   // get image width and height
@@ -78,73 +142,69 @@ void process (const char* file_1,const char* file_2) {
     if (D2_data[i]>disp_max) disp_max = D2_data[i];
   }
 
-  // copy float to uchar
-  image<uchar> *D1 = new image<uchar>(width,height);
-  image<uchar> *D2 = new image<uchar>(width,height);
-  for (int32_t i=0; i<width*height; i++) {
-    D1->data[i] = (uint8_t)max(255.0*D1_data[i]/disp_max,0.0);
-    D2->data[i] = (uint8_t)max(255.0*D2_data[i]/disp_max,0.0);
+  // show results
+  cv::Mat LGray(height, width, CV_8U, I1->data);
+  //  cv::Mat RGray(height, width, CV_8U, I2->data);
+  cv::imshow("left gray", LGray);
+  //  cv::imshow("Reft gray", RGray);
+
+  cv::Mat lDepth(height, width, CV_32F, D1_data);
+  //  cv::Mat rDepth(height, width, CV_32F, D1_data);
+  ShowVisableDepth("left depth", lDepth);
+  //  ShowVisableDepth("right depth", rDepth);
+  //  cv::waitKey(1);
+
+  if(bSaveDepthImages)
+  {
+    char output_1[1024];
+    char output_2[1024];
+    strncpy(output_1,file_1,strlen(file_1)-4);
+    strncpy(output_2,file_2,strlen(file_2)-4);
+
+    string sFileNameLeft = string(output_1) + "-Depth.pdm";
+    string sFileNameRight = string(output_2) + "-Depth.pdm";
+
+    cv::Mat left(height, width, CV_32F, D1_data);
+    cv::Mat right(height, width, CV_32F, D2_data);
+
+    WritePDM(sFileNameLeft, left );
+    WritePDM(sFileNameRight, right );
   }
 
-  cout << "... elas: done! use time: "<<DDTR::_Toc(dTime) << endl;
-
-
-  // save disparity images
-  char output_1[1024];
-  char output_2[1024];
-  strncpy(output_1,file_1,strlen(file_1)-4);
-  strncpy(output_2,file_2,strlen(file_2)-4);
-  output_1[strlen(file_1)-4] = '\0';
-  output_2[strlen(file_2)-4] = '\0';
-  strcat(output_1,"_disp.pgm");
-  strcat(output_2,"_disp.pgm");
-  savePGM(D1,output_1);
-  savePGM(D2,output_2);
+  cout << "[Process] elas done! use time: "<<DDTR::_Toc(dTime) << endl;
 
   // free memory
   delete I1;
   delete I2;
-  delete D1;
-  delete D2;
   free(D1_data);
   free(D2_data);
 }
 
-int main (int argc, char** argv) {
+int main (int argc, char** argv)
+{
+  GetPot cl( argc, argv );
+  std::string sLeftDir = cl.follow( "NONE", "-l" );
+  std::string sRightDir = cl.follow("NONE", "-r");
 
-  // run demo
-  if (argc==2 && !strcmp(argv[1],"demo")) {
-    process("img/cones_left.pgm",   "img/cones_right.pgm");
-    process("img/aloe_left.pgm",    "img/aloe_right.pgm");
-    process("img/raindeer_left.pgm","img/raindeer_right.pgm");
-    process("img/urban1_left.pgm",  "img/urban1_right.pgm");
-    process("img/urban2_left.pgm",  "img/urban2_right.pgm");
-    process("img/urban3_left.pgm",  "img/urban3_right.pgm");
-    process("img/urban4_left.pgm",  "img/urban4_right.pgm");
-    cout << "... done!" << endl;
-
-  // compute disparity from input pair
+  if(sLeftDir == "NONE" || sRightDir == "NONE" )
+  {
+    std::cerr<<"Error! Please input valid arguements. e.g."
+               "-l /Users/luma/Code/DataSet/LoopStereo/"<<
+               "-l /Users/luma/Code/DataSet/LoopStereo/"<<std::endl;
+    return false;
   }
-  else if (argc==3) {
 
-    for( int i=0;i!=10;i++)
-    {
-      double dTime = DDTR::_Tic();
-      process(argv[1],argv[2]);
-      cout << "... done! use time: "<<DDTR::_Toc(dTime) << endl;
-    }
+  std::vector<std::string> m_vLeftImgPaths = ScanDir(sLeftDir.c_str(), "Left");
+  std::vector<std::string> m_vRightImgPaths = ScanDir(sLeftDir.c_str(), "Right");
 
-  // display help
-  } else {
-    cout << endl;
-    cout << "ELAS demo program usage: " << endl;
-    cout << "./elas demo ................ process all test images (image dir)" << endl;
-    cout << "./elas left.pgm right.pgm .. process a single stereo pair" << endl;
-    cout << "./elas -h .................. shows this help" << endl;
-    cout << endl;
-    cout << "Note: All images must be pgm greylevel images. All output" << endl;
-    cout << "      disparities will be scaled such that disp_max = 255." << endl;
-    cout << endl;
+  // now process
+  while(m_vLeftImgPaths.size() == m_vRightImgPaths.size() && m_vLeftImgPaths.size()!=0)
+  {
+    string sLeftName = sLeftDir + m_vLeftImgPaths[0];
+    string sRightName =  sRightDir + m_vRightImgPaths[0];
+    process(sLeftName.c_str(), sRightName.c_str() , false);
+    m_vLeftImgPaths.erase(m_vLeftImgPaths.begin());
+    m_vRightImgPaths.erase(m_vRightImgPaths.begin());
   }
 
   return 0;

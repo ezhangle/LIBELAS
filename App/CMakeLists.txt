@@ -12,9 +12,10 @@ set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp")
 SET(CMAKE_CXX_FLAGS "-msse3")
 
 find_package(LIBELAS REQUIRED)
-include_directories( ${LIBELAS_INCLUDE_DIRS})
+find_package(OpenCV REQUIRED)
+include_directories( ${LIBELAS_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 message("libelas dir:" ${LIBELAS_INCLUDE_DIRS})
 add_executable( LIBELASApp main.cpp Timer.cpp Timer.h)
-target_link_libraries(LIBELASApp ${LIBELAS_LIBRARIES} )
+target_link_libraries(LIBELASApp ${LIBELAS_LIBRARIES} ${OpenCV_LIBRARIES} )
 
  

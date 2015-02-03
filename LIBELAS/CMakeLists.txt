@@ -16,6 +16,11 @@ set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp")
 # use sse3 instruction set
 SET(CMAKE_CXX_FLAGS "-msse3")
 
+
+find_package( OpenCV REQUIRED )
+INCLUDE_DIRECTORIES(  ${OpenCV_INCLUDE_DIRS} )
+
+
 ################################################################################
 list(APPEND HDRS
      src/descriptor.h
@@ -45,7 +50,7 @@ CONFIGURE_FILE(
 
 # build demo program
 add_library(${LIBRARY_NAME}  ${HDRS} ${SRCS})
-target_link_libraries( ${LIBRARY_NAME} )
+target_link_libraries( ${LIBRARY_NAME}  ${OpenCV_LIBRARIES})
 
 #######################################################
 
