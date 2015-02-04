@@ -104,6 +104,7 @@ bool WritePDM( const std::string&  FileName, const cv::Mat& Image )
   pFile << 4294967295 << std::endl;
   pFile.write( (const char*)Image.data, Size );
   pFile.close();
+
   std::cout<<"[WritePDM] save pdm success, height:"<<Image.rows<<", width:"<<Image.cols<<", file: "
           <<FileName<<std::endl;
   return true;
@@ -135,10 +136,6 @@ void ShowHeatDepthMat(std::string sName, cv::Mat Depth)
   cv::waitKey(1);
 }
 
-void process (const char* file_1,const char* file_2, bool bSaveDepthImages) {
-
-}
-
 Sophus::SE3d T_rlFromCamModelRDF(
     const calibu::CameraModelAndTransform& lcmod,
     const calibu::CameraModelAndTransform& rcmod,
@@ -159,37 +156,6 @@ Sophus::SE3d T_rlFromCamModelRDF(
   return Sophus::SE3d(T_rl.block<3,3>(0,0), T_rl.block<3,1>(0,3) );
 }
 
-int main_old(int argc, char** argv)
-{
-  GetPot cl( argc, argv );
-  std::string sLeftDir = cl.follow( "NONE", "-l" );
-  std::string sRightDir = cl.follow("NONE", "-r");
-  //  std::string sVisualize = cl.follow("NONE", "-v");
-
-  if(sLeftDir == "NONE" || sRightDir == "NONE" )
-  {
-    std::cerr<<"Error! Please input valid arguements. e.g."
-               "-l /Users/luma/Code/DataSet/LoopStereo/"<<
-               "-l /Users/luma/Code/DataSet/LoopStereo/"<<std::endl;
-    return false;
-  }
-
-  std::vector<std::string> m_vLeftImgPaths = ScanDir(sLeftDir.c_str(), "Left");
-  std::vector<std::string> m_vRightImgPaths = ScanDir(sLeftDir.c_str(), "Right");
-
-  // now process
-  while(m_vLeftImgPaths.size() == m_vRightImgPaths.size() && m_vLeftImgPaths.size()!=0)
-  {
-    string sLeftName = sLeftDir + m_vLeftImgPaths[0];
-    string sRightName =  sRightDir + m_vRightImgPaths[0];
-    process(sLeftName.c_str(), sRightName.c_str(), false);
-    m_vLeftImgPaths.erase(m_vLeftImgPaths.begin());
-    m_vRightImgPaths.erase(m_vRightImgPaths.begin());
-  }
-
-  return 0;
-}
-
 int main (int argc, char** argv) {
 
   GetPot cl( argc, argv );
@@ -197,12 +163,15 @@ int main (int argc, char** argv) {
   std::string sLeftDir = cl.follow( "NONE", "-l" );
   std::string sRightDir = cl.follow("NONE", "-r");
   std::string scmod = cl.follow("","-cmod");
+  std::string sOutDir = cl.follow("NONE", "-out");
 
-  if(sLeftDir == "NONE" || sRightDir == "NONE" || scmod == "NONE")
+  if(sLeftDir == "NONE" || sRightDir == "NONE" || scmod == "NONE" /*|| sOutDir == "NONE"*/)
   {
     std::cerr<<"Error! Please input valid arguements. e.g."
                "-l /Users/luma/Code/DataSet/LoopStereo/"<<
-               "-l /Users/luma/Code/DataSet/LoopStereo/"<<std::endl;
+               "-l /Users/luma/Code/DataSet/LoopStereo/"<<
+               "-cmod /Users/luma/Code/DataSet/LoopStereo/cameras.xml"<<
+               "-o /Users/luma/Code/DataSet/LoopStereo/Depth/" <<std::endl;
     return false;
   }
 
@@ -304,20 +273,18 @@ int main (int argc, char** argv) {
     // download depth from GPU
     dDepth.MemcpyToHost( hDepth.data );
 
-    bool bSaveDepthImages = false;
+    bool bSaveDepthImages = true;
 
     if(bSaveDepthImages)
     {
       char output_1[1024];
-      char output_2[1024];
-      strncpy(output_1,sLeftName.c_str(),strlen(sLeftName.c_str())-4);
-      strncpy(output_2,sRightName.c_str(),strlen(sRightName.c_str())-4);
+      strncpy(output_1, sLeftName.c_str(), strlen(sLeftName.c_str())-4);
       string sFileNameLeft = string(output_1) + "-Depth.pdm";
       WritePDM(sFileNameLeft, hDepth );
     }
 
-    ShowHeatDepthMat("depth image", hDepth);
-    cv::waitKey(1);
+    //    ShowHeatDepthMat("depth image", hDepth);
+    //    cv::waitKey(1);
 
     // free memory
     vLeftImgPaths.erase(vLeftImgPaths.begin());
