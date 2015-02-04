@@ -28,10 +28,20 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <dirent.h>
 #include <string>
 #include <vector>
-#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
-#include "GetPot"
+#include <Eigen/Core>
+#include <HAL/Utils/GetPot>
+#include <HAL/Camera/CameraDevice.h>
+#include <calibu/Calibu.h>
+
+#include <HAL/Camera/CameraDevice.h>
+#include <PbMsgs/Image.h>
+#include <calibu/cam/CameraRig.h>
+#include <calibu/cam/CameraXml.h>
+#include <kangaroo/ImageIntrinsics.h>
+#include <kangaroo/kangaroo.h>
+#include <opencv2/imgcodecs/imgcodecs_c.h>
 
 using namespace std;
 
@@ -97,94 +107,64 @@ bool WritePDM( const std::string&  FileName, const cv::Mat& Image )
   std::cout<<"[WritePDM] save pdm success, height:"<<Image.rows<<", width:"<<Image.cols<<", file: "
           <<FileName<<std::endl;
   return true;
+
 }
 
+void ShowHeatDepthMat(std::string sName, cv::Mat Depth)
+{
+  double min;
+  double max;
+  cv::minMaxIdx(Depth, &min, &max);
+
+  if(max >100.d)
+  {
+    max = 100.d;
+  }
+
+  cv::Mat adjMap;
+  Depth.convertTo(adjMap, CV_8UC1, 255 / (max-min), -min);
+  cv::Mat falseColorsMap;
+  cv::applyColorMap(adjMap, falseColorsMap, cv::COLORMAP_WINTER);
+
+  //  std::string sString = "Min:"+std::to_string(min)+",Max:"+std::to_string(max);
+  //  cv::putText(falseColorsMap, sString, cvPoint(50,50), cv::FONT_HERSHEY_DUPLEX, 1.0,
+  //              cvScalar(0,0,255), 2, CV_AA);
+
+  std::cout<<"max depth:"<<max<<", min depth:"<<min<<std::endl;
+  cv::imshow(sName, falseColorsMap);
+  cv::waitKey(1);
+}
 
 void process (const char* file_1,const char* file_2, bool bSaveDepthImages) {
 
-  // load images
-  image<uchar> *I1,*I2;
-  I1 = loadPGM(file_1);
-  I2 = loadPGM(file_2);
-
-  // check for correct size
-  if (I1->width()<=0 || I1->height() <=0 || I2->width()<=0 || I2->height() <=0 ||
-      I1->width()!=I2->width() || I1->height()!=I2->height()) {
-    cout << "ERROR: Images must be of same size, but" << endl;
-    cout << "       I1: " << I1->width() <<  " x " << I1->height() <<
-            ", I2: " << I2->width() <<  " x " << I2->height() << endl;
-    delete I1;
-    delete I2;
-    return;
-  }
-
-  // get image width and height
-  int32_t width  = I1->width();
-  int32_t height = I1->height();
-
-  // allocate memory for disparity images
-  const int32_t dims[3] = {width,height,width}; // bytes per line = width
-  float* D1_data = (float*)malloc(width*height*sizeof(float));
-  float* D2_data = (float*)malloc(width*height*sizeof(float));
-
-  double dTime = DDTR::_Tic();
-
-  // process
-  Elas::parameters param;
-  param.postprocess_only_left = false;
-  Elas elas(param);
-  elas.process(I1->data,I2->data,D1_data,D2_data,dims);
-
-  // find maximum disparity for scaling output disparity images to [0..255]
-  float disp_max = 0;
-  for (int32_t i=0; i<width*height; i++) {
-    if (D1_data[i]>disp_max) disp_max = D1_data[i];
-    if (D2_data[i]>disp_max) disp_max = D2_data[i];
-  }
-
-  // show results
-  cv::Mat LGray(height, width, CV_8U, I1->data);
-  //  cv::Mat RGray(height, width, CV_8U, I2->data);
-  cv::imshow("left gray", LGray);
-  //  cv::imshow("Reft gray", RGray);
-
-  cv::Mat lDepth(height, width, CV_32F, D1_data);
-  //  cv::Mat rDepth(height, width, CV_32F, D1_data);
-  ShowVisableDepth("left depth", lDepth);
-  //  ShowVisableDepth("right depth", rDepth);
-  //  cv::waitKey(1);
-
-  if(bSaveDepthImages)
-  {
-    char output_1[1024];
-    char output_2[1024];
-    strncpy(output_1,file_1,strlen(file_1)-4);
-    strncpy(output_2,file_2,strlen(file_2)-4);
-
-    string sFileNameLeft = string(output_1) + "-Depth.pdm";
-    string sFileNameRight = string(output_2) + "-Depth.pdm";
-
-    cv::Mat left(height, width, CV_32F, D1_data);
-    cv::Mat right(height, width, CV_32F, D2_data);
-
-    WritePDM(sFileNameLeft, left );
-    WritePDM(sFileNameRight, right );
-  }
-
-  cout << "[Process] elas done! use time: "<<DDTR::_Toc(dTime) << endl;
-
-  // free memory
-  delete I1;
-  delete I2;
-  free(D1_data);
-  free(D2_data);
 }
 
-int main (int argc, char** argv)
+Sophus::SE3d T_rlFromCamModelRDF(
+    const calibu::CameraModelAndTransform& lcmod,
+    const calibu::CameraModelAndTransform& rcmod,
+    const Eigen::Matrix3d& targetRDF)
+{
+  // Transformation matrix to adjust to target RDF
+  Eigen::Matrix4d Tadj[2] = {Eigen::Matrix4d::Identity(),Eigen::Matrix4d::Identity()};
+  Tadj[0].block<3,3>(0,0) = targetRDF.transpose() * lcmod.camera.RDF();
+  Tadj[1].block<3,3>(0,0) = targetRDF.transpose() * rcmod.camera.RDF();
+
+  // Computer Poses in our adjust coordinate system
+  const Eigen::Matrix4d T_lw_ = Tadj[0] * lcmod.T_wc.matrix().inverse();
+  const Eigen::Matrix4d T_rw_ = Tadj[1] * rcmod.T_wc.matrix().inverse();
+
+  // Computer transformation to right camera frame from left
+  const Eigen::Matrix4d T_rl = T_rw_ * T_lw_.inverse();
+
+  return Sophus::SE3d(T_rl.block<3,3>(0,0), T_rl.block<3,1>(0,3) );
+}
+
+int main_old(int argc, char** argv)
 {
   GetPot cl( argc, argv );
   std::string sLeftDir = cl.follow( "NONE", "-l" );
   std::string sRightDir = cl.follow("NONE", "-r");
+  //  std::string sVisualize = cl.follow("NONE", "-v");
 
   if(sLeftDir == "NONE" || sRightDir == "NONE" )
   {
@@ -202,7 +182,7 @@ int main (int argc, char** argv)
   {
     string sLeftName = sLeftDir + m_vLeftImgPaths[0];
     string sRightName =  sRightDir + m_vRightImgPaths[0];
-    process(sLeftName.c_str(), sRightName.c_str() , false);
+    process(sLeftName.c_str(), sRightName.c_str(), false);
     m_vLeftImgPaths.erase(m_vLeftImgPaths.begin());
     m_vRightImgPaths.erase(m_vRightImgPaths.begin());
   }
@@ -210,4 +190,145 @@ int main (int argc, char** argv)
   return 0;
 }
 
+int main (int argc, char** argv) {
 
+  GetPot cl( argc, argv );
+
+  std::string sLeftDir = cl.follow( "NONE", "-l" );
+  std::string sRightDir = cl.follow("NONE", "-r");
+  std::string scmod = cl.follow("","-cmod");
+
+  if(sLeftDir == "NONE" || sRightDir == "NONE" || scmod == "NONE")
+  {
+    std::cerr<<"Error! Please input valid arguements. e.g."
+               "-l /Users/luma/Code/DataSet/LoopStereo/"<<
+               "-l /Users/luma/Code/DataSet/LoopStereo/"<<std::endl;
+    return false;
+  }
+
+  const calibu::CameraRig rig = calibu::ReadXmlRig(scmod);
+
+  if( rig.cameras.size() != 2 ) {
+    std::cerr << "Two camera models are required to run this program!" << std::endl;
+    exit(1);
+  }
+
+  Eigen::Matrix3f CamModel0 = rig.cameras[0].camera.K().cast<float>();
+  Eigen::Matrix3f CamModel1 = rig.cameras[1].camera.K().cast<float>();
+
+  roo::ImageIntrinsics camMod[] = {
+    {CamModel0(0,0),CamModel0(1,1),CamModel0(0,2),CamModel0(1,2)},
+    {CamModel1(0,0),CamModel1(1,1),CamModel1(0,2),CamModel1(1,2)}
+  };
+
+  const Eigen::Matrix3d& Kl = camMod[0][0].Matrix();
+
+  // print selected camera model
+  std::cout << "Camera Model used: " << std::endl << camMod[0][0].Matrix() << std::endl;
+
+  Eigen::Matrix3d RDFvision;RDFvision<< 1,0,0,  0,1,0,  0,0,1;
+  Eigen::Matrix3d RDFrobot; RDFrobot << 0,1,0,  0,0, 1,  1,0,0;
+  Eigen::Matrix4d T_vis_ro = Eigen::Matrix4d::Identity();
+  T_vis_ro.block<3,3>(0,0) = RDFvision.transpose() * RDFrobot;
+  Eigen::Matrix4d T_ro_vis = Eigen::Matrix4d::Identity();
+  T_ro_vis.block<3,3>(0,0) = RDFrobot.transpose() * RDFvision;
+
+  const Sophus::SE3d T_rl = T_rlFromCamModelRDF(rig.cameras[0], rig.cameras[1], RDFvision);
+  const double baseline = T_rl.translation().norm();
+
+  std::cout << "Baseline is: " << baseline << std::endl;
+
+  /// --------------------------------------------------------------------------
+  // now read images
+  std::vector<std::string> vLeftImgPaths = ScanDir(sLeftDir.c_str(), "Left");
+  std::vector<std::string> vRightImgPaths = ScanDir(sLeftDir.c_str(), "Right");
+
+  string sLeftName = sLeftDir + vLeftImgPaths[0];
+  cv::Mat TestMat = cv::imread(sLeftName, CV_LOAD_IMAGE_COLOR);
+
+  /// --------------------------------------------------------------------------
+  // prepare the system for the task
+  const unsigned int width = TestMat.cols;
+  const unsigned int height = TestMat.rows;
+
+  roo::Image<float, roo::TargetDevice, roo::Manage> dDisparity(width, height);
+  roo::Image<float, roo::TargetDevice, roo::Manage> dDepth(width, height);
+  cv::Mat hDisparity1 = cv::Mat(height, width, CV_32FC1);
+  cv::Mat hDisparity2 = cv::Mat(height, width, CV_32FC1);
+  cv::Mat hDepth = cv::Mat(height, width, CV_32FC1);
+
+  // ELAS image format
+  image<uchar> *I1 = new image<uchar>(width, height);
+  image<uchar> *I2 = new image<uchar>(width, height);
+
+  // allocate memory for disparity images
+  int32_t dims[3];
+  dims[0] = width; // bytes per line = width
+  dims[1] = height; // bytes per line = width
+  dims[2] = width; // bytes per line = width
+
+  // set up ELAS process
+  Elas::parameters param;
+  param.postprocess_only_left = false;
+  Elas elas(param);
+
+  // now process
+  while(vLeftImgPaths.size() == vRightImgPaths.size() && vLeftImgPaths.size()!=0)
+  {
+    string sLeftName = sLeftDir + vLeftImgPaths[0];
+    string sRightName =  sRightDir + vRightImgPaths[0];
+
+    std::cout<<"Processing: "<<sLeftName<<std::endl;
+
+    // load images
+    I1 = loadPGM(sLeftName.c_str());
+    I2 = loadPGM(sRightName.c_str());
+
+    // get image width and height
+    int32_t width  = I1->width();
+    int32_t height = I1->height();
+
+    // allocate memory for disparity images
+    const int32_t dims[3] = {width,height,width}; // bytes per line = width
+
+    // process
+    elas.process(I1->data, I2->data, (float*)hDisparity1.data,(float*)hDisparity2.data, dims);
+
+    // -----
+    // upload disparity to GPU
+    dDisparity.MemcpyFromHost((float*)hDisparity1.data);
+
+    // convert disparity to depth
+    roo::Disp2Depth(dDisparity, dDepth, Kl(0,0), baseline);
+
+    // download depth from GPU
+    dDepth.MemcpyToHost( hDepth.data );
+
+    bool bSaveDepthImages = false;
+
+    if(bSaveDepthImages)
+    {
+      char output_1[1024];
+      char output_2[1024];
+      strncpy(output_1,sLeftName.c_str(),strlen(sLeftName.c_str())-4);
+      strncpy(output_2,sRightName.c_str(),strlen(sRightName.c_str())-4);
+      string sFileNameLeft = string(output_1) + "-Depth.pdm";
+      WritePDM(sFileNameLeft, hDepth );
+    }
+
+    ShowHeatDepthMat("depth image", hDepth);
+    cv::waitKey(1);
+
+    // free memory
+    vLeftImgPaths.erase(vLeftImgPaths.begin());
+    vRightImgPaths.erase(vRightImgPaths.begin());
+  }
+
+  delete I1;
+  delete I2;
+
+
+  cout << "... done!" << endl;
+
+  return 0;
+}
