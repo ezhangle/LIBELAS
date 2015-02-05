@@ -110,7 +110,7 @@ template <class T> image<T> *image<T>::copy() const {
 
 class pnm_error {};
 
-void pnm_read(std::ifstream &file, char *buf) {
+inline void pnm_read(std::ifstream &file, char *buf) {
   char doc[BUF_SIZE];
   char c;
   
@@ -126,7 +126,7 @@ void pnm_read(std::ifstream &file, char *buf) {
   file.ignore();
 }
 
-image<uchar> *loadPGM(const char *name) {
+inline image<uchar> *loadPGM(const char *name) {
   char buf[BUF_SIZE];
   
   // read header
@@ -155,7 +155,7 @@ image<uchar> *loadPGM(const char *name) {
   return im;
 }
 
-void savePGM(image<uchar> *im, const char *name) {
+inline void savePGM(image<uchar> *im, const char *name) {
   int width = im->width();
   int height = im->height();
   std::ofstream file(name, std::ios::out | std::ios::binary);
