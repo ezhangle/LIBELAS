@@ -59,17 +59,17 @@ bool ELASStereo::InitELAS(std::string sLeftDir, std::string sRightDir) {
   dims[2] = m_width;   // bytes per line = width
 
   // set up ELAS process
-  Elas::parameters param;
-  param.postprocess_only_left = false;
-  Elas elas(param);
-  m_pelas = &elas;
+  //  Elas::parameters param;
+  //  param.postprocess_only_left = false;
+  //  Elas elas(param);
+  //  m_pelas = &elas;
 
   // now process
   m_vLeftPaths = ScanDir(sLeftDir.c_str(), "Left");
   m_vRightPaths = ScanDir(sRightDir.c_str(), "Right");
 }
 
-void ELASStereo::Run(std::string sLeftDir, std::string sRightDir) {
+void ELASStereo::Run(std::string sLeftDir, std::string sRightDir, bool bSaveDepth) {
   std::string sLeftName = sLeftDir + m_vLeftPaths[0];
   std::string sRightName = sRightDir + m_vRightPaths[0];
 
@@ -87,8 +87,14 @@ void ELASStereo::Run(std::string sLeftDir, std::string sRightDir) {
   const int32_t dims[3] = {width, height, width};  // bytes per line = width
 
   // process
-  m_pelas->process(m_I1->data, m_I2->data, (float*)m_hDisparity1.data,
-                   (float*)m_hDisparity2.data, dims);
+  Elas::parameters param;
+  param.postprocess_only_left = false;
+  Elas elas(param);
+  elas.process(m_I1->data, m_I2->data, (float*)m_hDisparity1.data,
+               (float*)m_hDisparity2.data, dims);
+
+  //  m_pelas->process(m_I1->data, m_I2->data, (float*)m_hDisparity1.data,
+  //                   (float*)m_hDisparity2.data, dims);
 
   std::cout << "[Run] finish Processing: " << sLeftName << std::endl;
 
@@ -105,9 +111,7 @@ void ELASStereo::Run(std::string sLeftDir, std::string sRightDir) {
   cv::waitKey(1);
 
   // -----
-  bool bSaveDepthImages = false;
-
-  if (bSaveDepthImages) {
+  if (bSaveDepth) {
     char output_1[1024];
     strncpy(output_1, sLeftName.c_str(), strlen(sLeftName.c_str()) - 4);
     std::string sFileNameLeft = std::string(output_1) + "-Depth.pdm";

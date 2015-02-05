@@ -50,10 +50,11 @@ int main(int argc, char** argv) {
   while (elas.m_vLeftPaths.size() == elas.m_vRightPaths.size() &&
          elas.m_vLeftPaths.size() != 0)
   {
-    elas.Run(sLeftDir, sRightDir);
+    elas.Run(sLeftDir, sRightDir, false);
   }
 
-  //  delete elas.m_I1;
-  //  delete elas.m_I2;
+  delete elas.m_I1;
+  delete elas.m_I2;
 
+  return 0;
 }

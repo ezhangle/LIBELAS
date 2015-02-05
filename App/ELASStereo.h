@@ -116,7 +116,7 @@ class ELASStereo {
 
   bool InitELAS(std::string sLeftDir, std::string sRightDir);
 
-  void Run(std::string sLeftDir, std::string sRightDir);
+  void Run(std::string sLeftDir, std::string sRightDir, bool bSaveDepth);
 
  public:
   Eigen::Matrix3d m_Kl;
