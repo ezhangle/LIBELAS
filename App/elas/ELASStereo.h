@@ -43,6 +43,40 @@ inline std::vector<std::string> ScanDir(const char* cDir, std::string sKeyword) 
   return vFileNames;
 }
 
+inline std::vector<std::string> ScanDir(
+    const char*     cDir,
+    std::string     sKeyword,
+    std::string     sFormat)
+{
+  DIR *dir;
+  struct dirent *ent;
+  std::vector<std::string> vFileNames;
+  if ((dir = opendir (cDir)) != NULL)
+  {
+    std::string sFileName;
+    while ((ent = readdir (dir)) != NULL)
+    {
+      sFileName = std::string(ent->d_name);
+      if(sFileName.find(sKeyword)!=std::string::npos)
+      {
+        if(sFileName.find(sFormat)!=std::string::npos)
+        {
+          vFileNames.push_back(sFileName);
+        }
+      }
+    }
+    closedir (dir);
+  }
+  else
+  {
+    std::cout<<"Error! Could not open directory "<<std::string(cDir)<<std::endl;
+  }
+
+  std::cout<<"[ScanDirectory] Found "<<vFileNames.size()<<
+             " files with keyword: "<<sKeyword<<", format: "<<sFormat<<std::endl;
+  return vFileNames;
+}
+
 inline void ShowVisableDepth(std::string sWndName, const cv::Mat Depth) {
   double min;
   double max;
@@ -114,9 +148,16 @@ class ELASStereo {
   ELASStereo(calibu::CameraRig& rig, const unsigned int width,
              const unsigned int height);
 
-  bool InitELAS(std::string sLeftDir, std::string sRightDir);
+  ~ELASStereo() {
+    delete m_I1;
+    delete m_I2;
+  }
 
-  void Run(std::string sLeftDir, std::string sRightDir, bool bSaveDepth);
+  bool InitELAS();
+
+  void Run(std::string sLeftDir, std::string sRightName);
+
+  void Run();
 
  public:
   Eigen::Matrix3d m_Kl;
@@ -133,9 +174,6 @@ class ELASStereo {
   // ELAS image format
   image<uchar>* m_I1;
   image<uchar>* m_I2;
-
-  std::vector<std::string> m_vLeftPaths;
-  std::vector<std::string> m_vRightPaths;
   Elas* m_pelas;
 };
 

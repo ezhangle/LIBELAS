@@ -25,6 +25,15 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 using namespace std;
 
+void Help()
+{
+  std::cerr << "Error! Please input valid arguements. e.g."
+               "-l /Users/luma/Code/DataSet/LoopStereo/"
+            << "-l /Users/luma/Code/DataSet/LoopStereo/"
+            << "-cmod /Users/luma/Code/DataSet/LoopStereo/cameras.xml"
+            << "-o /Users/luma/Code/DataSet/LoopStereo/Depth/" << std::endl;
+}
+
 int main(int argc, char** argv) {
   GetPot cl(argc, argv);
 
@@ -35,26 +44,43 @@ int main(int argc, char** argv) {
 
   if (sLeftDir == "NONE" || sRightDir == "NONE" ||
       scmod == "NONE" /*|| sOutDir == "NONE"*/) {
-    std::cerr << "Error! Please input valid arguements. e.g."
-                 "-l /Users/luma/Code/DataSet/LoopStereo/"
-              << "-l /Users/luma/Code/DataSet/LoopStereo/"
-              << "-cmod /Users/luma/Code/DataSet/LoopStereo/cameras.xml"
-              << "-o /Users/luma/Code/DataSet/LoopStereo/Depth/" << std::endl;
+    Help();
     return false;
   }
 
   calibu::CameraRig rig = calibu::ReadXmlRig(scmod);
   ELASStereo elas(rig, 640, 480);
-  elas.InitELAS(sLeftDir, sRightDir);
+  elas.InitELAS();
 
-  while (elas.m_vLeftPaths.size() == elas.m_vRightPaths.size() &&
-         elas.m_vLeftPaths.size() != 0)
+  // now process
+  std::vector<std::string> m_vLeftPaths;
+  std::vector<std::string> m_vRightPaths;
+  m_vLeftPaths = ScanDir(sLeftDir.c_str(), "Left", ".pgm");
+  m_vRightPaths = ScanDir(sRightDir.c_str(), "Right", ".pgm");
+
+  bool bSaveDepth = true;
+
+  while (m_vLeftPaths.size() == m_vRightPaths.size() &&
+         m_vLeftPaths.size() != 0)
   {
-    elas.Run(sLeftDir, sRightDir, false);
-  }
+    std::string sLeftName  = sLeftDir + m_vLeftPaths[0];
+    std::string sRightName  = sRightDir + m_vRightPaths[0];
 
-  delete elas.m_I1;
-  delete elas.m_I2;
+    elas.Run(sLeftName, sRightName);
+
+    // -----
+    if (bSaveDepth) {
+      char output_1[1024];
+      strncpy(output_1, sLeftName.c_str(), strlen(sLeftName.c_str()) - 4);
+      std::string sFileNameLeft = std::string(output_1) + "-Depth.pdm";
+      WritePDM(sFileNameLeft, elas.m_hDepth);
+    }
+
+    // free memory
+    m_vLeftPaths.erase(m_vLeftPaths.begin());
+    m_vRightPaths.erase(m_vRightPaths.begin());
+  }
 
   return 0;
 }
+
