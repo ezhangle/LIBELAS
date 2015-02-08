@@ -25,8 +25,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 using namespace std;
 
-void Help()
-{
+void Help() {
   std::cerr << "Error! Please input valid arguements. e.g."
                "-l /Users/luma/Code/DataSet/LoopStereo/"
             << "-l /Users/luma/Code/DataSet/LoopStereo/"
@@ -38,47 +37,51 @@ int main(int argc, char** argv) {
   GetPot cl(argc, argv);
   std::string scmod = cl.follow("", "-cmod");
   std::string scam = cl.follow("NONE", "-cam");
-  std::string sDir = cl.follow("NONE", "-dir");     // dir or the log file
+  std::string sDir = cl.follow("NONE", "-dir");  // dir or the log file
 
-  if ( scmod == "NONE" || scam == "NONE" || sDir =="NONE") {
+  if (scmod == "NONE" || scam == "NONE" || sDir == "NONE") {
     Help();
     return false;
   }
 
   hal::Camera camera = hal::Camera(scam.c_str());
-  std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
-
-  const unsigned int width = camera.Width();
-  const unsigned int height = camera.Height();
 
   calibu::CameraRig rig = calibu::ReadXmlRig(scmod);
-  ELASStereo elas(rig, width, height);
+  ELASStereo elas(rig, camera.Width(), camera.Height());
   elas.InitELAS();
 
   int nFrame = 0;
-  bool bSaveDepth = false;
+  bool bSaveDepth = true;
+
   // now process
-  while (camera.Capture(*images))
-  {
-    //    memcpy(imPtr(elas.m_I1, 0, 0), images->at(0)->data(), elas.m_width * elas.m_height);
-    //    memcpy(imPtr(elas.m_I2, 0, 0), images->at(1)->data(), elas.m_width * elas.m_height);
-    //    elas.Run();
+  while (1) {
+    std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
 
-    // -----
-    if (bSaveDepth) {
-      char cNum[25];
-      sprintf(cNum, "%05d", nFrame);
-      std::string sNum(cNum);
-      std::string sFileNameLeft = sDir + sNum + "-Depth.pdm";
-      WritePDM(sFileNameLeft, elas.m_hDepth);
+    if (camera.Capture(*images))
+    {
+      memcpy(imPtr(elas.m_I1, 0, 0), images->at(0)->data(), elas.m_width *
+             elas.m_height);
+      memcpy(imPtr(elas.m_I2, 0, 0), images->at(1)->data(), elas.m_width *
+             elas.m_height);
+      elas.Run();
+
+      // -----
+      if (bSaveDepth) {
+        char cNum[25];
+        sprintf(cNum, "%05d", nFrame);
+        std::string sNum(cNum);
+        std::string sFileNameLeft = sDir + sNum + "-Depth.pdm";
+        WritePDM(sFileNameLeft, elas.m_hDepth);
+      }
+
+      printf("finish frame: %d", nFrame);
+      nFrame++;
+    } else {
+      std::cout << "Fatal Error! Cannot Read image from sensor"
+                << std::endl;
+      exit(-1);
     }
-
-    printf("finish frame: %d", nFrame);
-    nFrame++;
   }
 
   return 0;
 }
-
-
-

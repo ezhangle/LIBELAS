@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   ELASStereo elas(rig, 640, 480);
   elas.InitELAS();
 
-  // now process
+  // --- now process
   std::vector<std::string> m_vLeftPaths;
   std::vector<std::string> m_vRightPaths;
   m_vLeftPaths = ScanDir(sLeftDir.c_str(), "Left", ".pgm");
@@ -68,6 +68,9 @@ int main(int argc, char** argv) {
 
     elas.Run(sLeftName, sRightName);
 
+    //    ShowHeatDepthMat("depth image", elas.m_hDepth);
+    //    cv::waitKey(1);
+
     // -----
     if (bSaveDepth) {
       char output_1[1024];
@@ -76,6 +79,7 @@ int main(int argc, char** argv) {
       WritePDM(sFileNameLeft, elas.m_hDepth);
     }
 
+    // -----
     // free memory
     m_vLeftPaths.erase(m_vLeftPaths.begin());
     m_vRightPaths.erase(m_vRightPaths.begin());

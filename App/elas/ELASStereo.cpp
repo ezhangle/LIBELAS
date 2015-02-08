@@ -83,10 +83,6 @@ void ELASStereo::Run(std::string sLeftName, std::string sRightName) {
 
   // download depth from GPU
   m_dDepth.MemcpyToHost(m_hDepth.data);
-  ShowHeatDepthMat("depth image", m_hDepth);
-  cv::waitKey(1);
-
-
 }
 
 
@@ -114,6 +110,4 @@ void ELASStereo::Run() {
 
   // download depth from GPU
   m_dDepth.MemcpyToHost(m_hDepth.data);
-  ShowHeatDepthMat("depth image", m_hDepth);
-  cv::waitKey(1);
 }
