@@ -172,8 +172,8 @@ class ELASStereo {
   cv::Mat m_hDepth;
 
   // ELAS image format
-  image<uchar>* m_I1;
-  image<uchar>* m_I2;
+  ELAS::image<uchar>* m_I1;
+  ELAS::image<uchar>* m_I2;
   Elas* m_pelas;
 };
 

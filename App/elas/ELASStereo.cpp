@@ -49,8 +49,8 @@ bool ELASStereo::InitELAS() {
   m_hDepth = cv::Mat(m_height, m_width, CV_32FC1);
 
   // ELAS image format
-  m_I1 = new image<uchar>(m_width, m_height);
-  m_I2 = new image<uchar>(m_width, m_height);
+  m_I1 = new ELAS::image<uchar>(m_width, m_height);
+  m_I2 = new ELAS::image<uchar>(m_width, m_height);
 }
 
 void ELASStereo::Run(std::string sLeftName, std::string sRightName) {

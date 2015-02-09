@@ -18,64 +18,14 @@
 #include <calibu/cam/CameraXml.h>
 #include <kangaroo/kangaroo.h>
 
-inline std::vector<std::string> ScanDir(const char* cDir, std::string sKeyword) {
-  DIR* dir;
-  struct dirent* ent;
-  std::vector<std::string> vFileNames;
-  if ((dir = opendir(cDir)) != NULL) {
-    std::string sFileName;
-
-    while ((ent = readdir(dir)) != NULL) {
-      sFileName = std::string(ent->d_name);
-      if (sFileName.find(sKeyword) != std::string::npos) {
-        vFileNames.push_back(sFileName);
-      }
-    }
-    closedir(dir);
-  } else {
-    std::cout << "Error! Could not open directory " << std::string(cDir)
-              << std::endl;
-  }
-
-  std::cout << "[ScanDirectory] Found " << vFileNames.size()
-            << " files with keyword: " << sKeyword
-            << " in dir:" << std::string(cDir) << std::endl;
-  return vFileNames;
+inline double _Tic() {
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  return tv.tv_sec + 1e-6 * (tv.tv_usec);
 }
 
-inline std::vector<std::string> ScanDir(
-    const char*     cDir,
-    std::string     sKeyword,
-    std::string     sFormat)
-{
-  DIR *dir;
-  struct dirent *ent;
-  std::vector<std::string> vFileNames;
-  if ((dir = opendir (cDir)) != NULL)
-  {
-    std::string sFileName;
-    while ((ent = readdir (dir)) != NULL)
-    {
-      sFileName = std::string(ent->d_name);
-      if(sFileName.find(sKeyword)!=std::string::npos)
-      {
-        if(sFileName.find(sFormat)!=std::string::npos)
-        {
-          vFileNames.push_back(sFileName);
-        }
-      }
-    }
-    closedir (dir);
-  }
-  else
-  {
-    std::cout<<"Error! Could not open directory "<<std::string(cDir)<<std::endl;
-  }
+inline double _Toc(double dSec) { return _Tic() - dSec; }
 
-  std::cout<<"[ScanDirectory] Found "<<vFileNames.size()<<
-             " files with keyword: "<<sKeyword<<", format: "<<sFormat<<std::endl;
-  return vFileNames;
-}
 
 inline void ShowVisableDepth(std::string sWndName, const cv::Mat Depth) {
   double min;
@@ -155,8 +105,6 @@ class ELASStereo {
 
   bool InitELAS();
 
-  void Run(std::string sLeftDir, std::string sRightName);
-
   void Run();
 
  public:
@@ -172,8 +120,8 @@ class ELASStereo {
   cv::Mat m_hDepth;
 
   // ELAS image format
-  image<uchar>* m_I1;
-  image<uchar>* m_I2;
+  ELAS::image<uchar>* m_I1;
+  ELAS::image<uchar>* m_I2;
   Elas* m_pelas;
 };
 

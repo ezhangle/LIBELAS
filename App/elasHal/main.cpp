@@ -45,7 +45,6 @@ int main(int argc, char** argv) {
   }
 
   hal::Camera camera = hal::Camera(scam.c_str());
-
   calibu::CameraRig rig = calibu::ReadXmlRig(scmod);
   ELASStereo elas(rig, camera.Width(), camera.Height());
   elas.InitELAS();
@@ -55,6 +54,7 @@ int main(int argc, char** argv) {
 
   // now process
   while (1) {
+    double dTime = _Tic();
     std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
 
     if (camera.Capture(*images))
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
         WritePDM(sFileNameLeft, elas.m_hDepth);
       }
 
-      printf("finish frame: %d", nFrame);
+      printf("finish frame: %d. Use time: %f\n", nFrame, _Toc(dTime));
       nFrame++;
     } else {
       std::cout << "Fatal Error! Cannot Read image from sensor"

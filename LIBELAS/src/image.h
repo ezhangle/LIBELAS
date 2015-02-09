@@ -29,6 +29,8 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <cstring>
 #include <fstream>
 
+namespace ELAS {
+
 // use imRef to access image data.
 #define imRef(im, x, y) (im->access[y][x])
   
@@ -162,6 +164,8 @@ inline void savePGM(image<uchar> *im, const char *name) {
 
   file << "P5\n" << width << " " << height << "\n" << UCHAR_MAX << "\n";
   file.write((char *)imPtr(im, 0, 0), width * height * sizeof(uchar));
+}
+
 }
 
 #endif

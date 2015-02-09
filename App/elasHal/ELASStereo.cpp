@@ -49,46 +49,9 @@ bool ELASStereo::InitELAS() {
   m_hDepth = cv::Mat(m_height, m_width, CV_32FC1);
 
   // ELAS image format
-  m_I1 = new image<uchar>(m_width, m_height);
-  m_I2 = new image<uchar>(m_width, m_height);
+  m_I1 = new ELAS::image<uchar>(m_width, m_height);
+  m_I2 = new ELAS::image<uchar>(m_width, m_height);
 }
-
-void ELASStereo::Run(std::string sLeftName, std::string sRightName) {
-  // load images
-  m_I1 = loadPGM(sLeftName.c_str());
-  m_I2 = loadPGM(sRightName.c_str());
-
-  std::cout << "[Run] before Processing: " << sLeftName << std::endl;
-
-  // get image width and height
-  int32_t width = m_I1->width();
-  int32_t height = m_I1->height();
-
-  // allocate memory for disparity images
-  const int32_t dims[3] = {width, height, width};  // bytes per line = width
-
-  // process
-  Elas::parameters param;
-  param.postprocess_only_left = false;
-  Elas elas(param);
-  elas.process(m_I1->data, m_I2->data, (float*)m_hDisparity1.data,
-               (float*)m_hDisparity2.data, dims);
-
-  // -----
-  // upload disparity to GPU
-  m_dDisparity.MemcpyFromHost((float*)m_hDisparity1.data);
-
-  // convert disparity to depth
-  roo::Disp2Depth(m_dDisparity, m_dDepth, m_Kl(0, 0), m_baseline);
-
-  // download depth from GPU
-  m_dDepth.MemcpyToHost(m_hDepth.data);
-  ShowHeatDepthMat("depth image", m_hDepth);
-  cv::waitKey(1);
-
-
-}
-
 
 void ELASStereo::Run() {
   // get image width and height
@@ -113,7 +76,7 @@ void ELASStereo::Run() {
   roo::Disp2Depth(m_dDisparity, m_dDepth, m_Kl(0, 0), m_baseline);
 
   // download depth from GPU
-  m_dDepth.MemcpyToHost(m_hDepth.data);
-  ShowHeatDepthMat("depth image", m_hDepth);
-  cv::waitKey(1);
+  //  m_dDepth.MemcpyToHost(m_hDepth.data);
+  //  ShowHeatDepthMat("depth image", m_hDepth);
+  //  cv::waitKey(1);
 }
