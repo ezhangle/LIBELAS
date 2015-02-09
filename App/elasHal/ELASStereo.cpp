@@ -76,7 +76,7 @@ void ELASStereo::Run() {
   roo::Disp2Depth(m_dDisparity, m_dDepth, m_Kl(0, 0), m_baseline);
 
   // download depth from GPU
-  //  m_dDepth.MemcpyToHost(m_hDepth.data);
+  m_dDepth.MemcpyToHost(m_hDepth.data);
   //  ShowHeatDepthMat("depth image", m_hDepth);
   //  cv::waitKey(1);
 }
